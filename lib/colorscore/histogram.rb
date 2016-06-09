@@ -2,8 +2,19 @@ require "shellwords"
 
 module Colorscore
   class Histogram
-    def initialize(image_path, colors=16, depth=8)
-      output = `convert #{image_path.shellescape} -resize 400x400 -format %c -dither None -quantize YIQ -colors #{colors.to_i} -depth #{depth.to_i} histogram:info:-`
+    def initialize(image_path, options = {})
+      params = [
+        '-format %c',
+        "-dither #{options.fetch(:dither) { 'None' }}",
+        "-quantize #{options.fetch(:quantize) { 'YIQ' }}",
+        "-colors #{options.fetch(:colors) { 16 }.to_i}",
+        "-depth #{options.fetch(:depth) { 8 }.to_i}",
+        '-alpha off '
+      ]
+
+      params.unshift(options[:resize]) if options[:resize]
+
+      output = `convert #{image_path.shellescape} #{ params.join(' ') } histogram:info:-`
       @lines = output.lines.sort.reverse.map(&:strip).reject(&:empty?)
     end
 
